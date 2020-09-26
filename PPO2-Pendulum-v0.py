@@ -187,7 +187,7 @@ class ActorNet2(object):
       return next_x, config
   
   def _uniform_init(self, input_size, output_size):
-      u = np.sqrt(6./(input_size+output_size))
+      u = np.sqrt(1./(input_size*output_size))
       return np.random.uniform(-u, u, (input_size, output_size))
 
 
@@ -304,7 +304,7 @@ class CriticNet2(object):
       return next_x, config
   
   def _uniform_init(self, input_size, output_size):
-      u = np.sqrt(6./(input_size+output_size))
+      u = np.sqrt(1./(input_size*output_size))
       return np.random.uniform(-u, u, (input_size, output_size))
 
 class Agent():
@@ -320,11 +320,6 @@ class Agent():
         self.mcnet = CriticNet2(3,100,1)
         self.buffer = []
         self.counter = 0   
-    
-
-    def save_param(self):
-        torch.save(self.anet.state_dict(), 'param/ppo_anet_params.pkl')
-        torch.save(self.cnet.state_dict(), 'param/ppo_cnet_params.pkl')
 
     def store(self, transition):
         self.buffer.append(transition)
@@ -353,7 +348,7 @@ class Agent():
         sum=0
         for i in range(n):
             sum+=(br[i]-mean)**2
-        std=math.sqrt(sum/n)
+        std=math.sqrt(sum/(n-1))
         
         target_v = np.zeros((n))
         adv = np.zeros((n))
@@ -405,11 +400,11 @@ def main():
     training_records = []
     running_reward = -1000
     state = env.reset()
-    for i_ep in range(1000):
+    for i_ep in range(1):
         score = 0
         state = env.reset()
 
-        for t in range(200):
+        for t in range(2000000000):
             action, action_log_prob = agent.manet.predict(state,2.0)
             state_, reward, done, _ = env.step([action[0,0].item()])
             if args.render:
@@ -419,24 +414,24 @@ def main():
             score += reward
             state = state_
 
-        running_reward = running_reward * 0.9 + score * 0.1
-        training_records.append(TrainingRecord(i_ep, running_reward))
+            if(t%200==0):
+                running_reward = running_reward * 0.9 + score * 0.1
+                training_records.append(TrainingRecord(i_ep, running_reward))
+            if(t%1000==0):
+                print('Ep {}\tMoving average score: {:.2f}\t'.format((int)(t/1000), running_reward))
+                score=0
 
-        if i_ep % args.log_interval == 0:
-            print('Ep {}\tMoving average score: {:.2f}\t'.format(i_ep, running_reward))
-        if running_reward > -200:
-            print("Solved! Moving average score is now {}!".format(running_reward))
-            env.close()
-            agent.save_param()
-            with open('log/ppo_training_records.pkl', 'wb') as f:
-                pickle.dump(training_records, f)
-            break
+            if running_reward > -200:
+                print("Solved! Moving average score is now {}!".format(running_reward))
+                env.close()
+                
+                break
 
     plt.plot([r.ep for r in training_records], [r.reward for r in training_records])
     plt.title('PPO')
     plt.xlabel('Episode')
     plt.ylabel('Moving averaged episode reward')
-    plt.savefig("img/ppo.png")
+    plt.savefig("ppo.png")
     plt.show()
 
 
