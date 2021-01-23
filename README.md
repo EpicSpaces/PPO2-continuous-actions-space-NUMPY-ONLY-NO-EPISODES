@@ -6,5 +6,8 @@ Pendulum v0 as gym test
 ![Alt text](ppo_graph.png?raw=true "pic")
 
 
+Derivatives :
+
 ![Alt text](Derivative.png?raw=true "pic")
+
 ![Alt text](Derivative2.png?raw=true "pic")
