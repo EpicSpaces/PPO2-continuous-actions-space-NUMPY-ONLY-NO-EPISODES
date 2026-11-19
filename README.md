@@ -3,7 +3,7 @@ Pendulum v0 as gym test .
 
 # Overview 
 
-![Alt text](pic.gif?raw=true "pic")
+![Alt text](snapshot.gif?raw=true "pic")
 
 ![Alt text](ppo_graph.png?raw=true "pic")
 
